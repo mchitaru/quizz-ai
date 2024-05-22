@@ -38,7 +38,7 @@ const questions = [
     answers: [
       {
         text: "JavaScript XML",
-        isCorrect: false,
+        isCorrect: true,
         id: 1,
       },
       {
