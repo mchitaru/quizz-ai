@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, X } from "lucide-react";
 import { useState } from "react";
 import ResultCard from "./_components/result-card";
+import QuizzSubmission from "./_components/quizz-submission";
 
 const questions = [
   {
@@ -90,6 +91,7 @@ export default function Home() {
   const [score, setScore] = useState<number>(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [submitted, setSubmitted] = useState<boolean>(false);
 
   const handleNext = () => {
     if (!started) {
@@ -99,6 +101,9 @@ export default function Home() {
 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
+    } else {
+      setSubmitted(true);
+      return;
     }
 
     setSelectedAnswer(null);
@@ -113,6 +118,18 @@ export default function Home() {
     }
     setIsCorrect(isCurrentCorrect);
   };
+
+  const scorePercentage: number = Math.round((score / questions.length) * 100);
+
+  if (submitted) {
+    return (
+      <QuizzSubmission
+        score={score}
+        scorePercentage={scorePercentage}
+        totalQuestions={questions.length}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -178,7 +195,11 @@ export default function Home() {
           size={"lg"}
           onClick={handleNext}
         >
-          {!started ? "Start" : "Next"}
+          {!started
+            ? "Start"
+            : currentQuestion === questions.length - 1
+            ? "Submit"
+            : "Next"}
         </Button>
       </footer>
     </div>
