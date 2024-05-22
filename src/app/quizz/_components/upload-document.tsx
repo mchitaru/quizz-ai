@@ -9,12 +9,34 @@ const UploadDocument = (props: Props) => {
     null
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!document) {
+      setError("Please upload the document first!");
+      return;
+    }
+
     setIsLoading(true);
-    console.log(document);
+
+    const formData = new FormData();
+    formData.append("pdf", document as Blob);
+    try {
+      const res = await fetch("/api/quizz/generate", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.status === 200) {
+        console.log("quizz generated succesfully");
+      }
+    } catch (e: any) {
+      console.log("error while generating quizz", e);
+    }
+
+    setIsLoading(false);
   };
   return (
     <div className="h-full">
@@ -38,6 +60,7 @@ const UploadDocument = (props: Props) => {
             onChange={(e) => setDocument(e?.target?.files?.[0])}
           />
         </label>
+        {error ? <p className="text-red-600">{error}</p> : null}
         <Button
           size="lg"
           className="mt-2"
