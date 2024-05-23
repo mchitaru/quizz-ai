@@ -42,24 +42,27 @@ export async function POST(req: NextRequest) {
       name: "extractor",
       description: "Extracts fields from the output",
       parameters: {
-        quizz: {
-          type: "object",
-          properties: {
-            name: { type: "string" },
-            description: { type: "string" },
-            questions: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  text: { type: "string" },
-                  answers: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        text: { type: "string" },
-                        isCorrect: { type: "boolean" },
+        type: "object",
+        properties: {
+          quizz: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              description: { type: "string" },
+              questions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    text: { type: "string" },
+                    answers: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          text: { type: "string" },
+                          isCorrect: { type: "boolean" },
+                        },
                       },
                     },
                   },
@@ -92,10 +95,7 @@ export async function POST(req: NextRequest) {
 
     const { quizzId } = await saveQuizz(result.quizz);
 
-    return NextResponse.json(
-      { message: "created succcesfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ quizzId: quizzId }, { status: 200 });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
