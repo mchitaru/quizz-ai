@@ -14,6 +14,7 @@ import {
   quizzes,
 } from "@/db/schema";
 import { useRouter } from "next/navigation";
+import { saveResults } from "@/app/actions/save-results";
 
 type Quizz = InferSelectModel<typeof quizzes> & { questions: Question[] };
 type Question = InferSelectModel<typeof questions> & { answers: Answer[] };
@@ -72,6 +73,16 @@ export default function QuizzQuestions(props: Props) {
 
   const handleClose = () => {
     router.push("/dashboard");
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const resId = await saveResults({ score }, props.quizz.id);
+    } catch (e) {
+      console.log(e);
+    }
+
+    setSubmitted(true);
   };
 
   const scorePercentage: number = Math.round((score / questions.length) * 100);
@@ -163,17 +174,23 @@ export default function QuizzQuestions(props: Props) {
             )?.text || ""
           }
         />
-        <Button
-          variant={"neo"}
-          size={"lg"}
-          onClick={handleNext}
-        >
-          {!started
-            ? "Start"
-            : currentQuestion === questions.length - 1
-            ? "Submit"
-            : "Next"}
-        </Button>
+        {currentQuestion === questions.length - 1 ? (
+          <Button
+            variant={"neo"}
+            size={"lg"}
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
+        ) : (
+          <Button
+            variant={"neo"}
+            size={"lg"}
+            onClick={handleNext}
+          >
+            {!started ? "Start" : "Next"}
+          </Button>
+        )}
       </footer>
     </div>
   );
