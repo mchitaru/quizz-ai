@@ -26,11 +26,7 @@ const Page = async ({
   if (!quizzId || !quizz || quizz.questions.length === 0) {
     return <div> Quizz not found</div>;
   }
-  return (
-    <div>
-      <QuizzQuestions quizz={quizz} />
-    </div>
-  );
+  return <QuizzQuestions quizz={quizz} />;
 };
 
 export default Page;

@@ -13,6 +13,7 @@ import {
   questions,
   quizzes,
 } from "@/db/schema";
+import { useRouter } from "next/navigation";
 
 type Quizz = InferSelectModel<typeof quizzes> & { questions: Question[] };
 type Question = InferSelectModel<typeof questions> & { answers: Answer[] };
@@ -27,9 +28,11 @@ export default function QuizzQuestions(props: Props) {
   const [started, setStarted] = useState<boolean>(false);
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [userAnswers, setUserAnswers] = useState<
+    { questionId: number; answerId: number }[]
+  >([]);
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const router = useRouter();
 
   const handleNext = () => {
     if (!started) {
@@ -43,21 +46,47 @@ export default function QuizzQuestions(props: Props) {
       setSubmitted(true);
       return;
     }
-
-    setSelectedAnswer(null);
-    setIsCorrect(null);
   };
 
-  const handleAnswer = (answer: Answer) => {
-    setSelectedAnswer(answer.id);
+  const handleAnswer = (answer: Answer, questionId: number) => {
+    const newUserAnswers = [
+      ...userAnswers,
+      {
+        answerId: answer.id,
+        questionId,
+      },
+    ];
+    setUserAnswers(newUserAnswers);
+
     const isCurrentCorrect = answer.isCorrect;
     if (isCurrentCorrect) {
       setScore(score + 1);
     }
-    setIsCorrect(isCurrentCorrect);
+  };
+
+  const handlePrev = () => {
+    if (currentQuestion !== 0) {
+      setCurrentQuestion((prev) => prev - 1);
+    }
+  };
+
+  const handleClose = () => {
+    router.push("/dashboard");
   };
 
   const scorePercentage: number = Math.round((score / questions.length) * 100);
+  const selectedAnswer: number | null | undefined = userAnswers.find(
+    (item) => item.questionId === questions[currentQuestion].id
+  )?.answerId;
+  const answerIdx = questions[currentQuestion].answers.findIndex(
+    (answer) => answer.id === selectedAnswer
+  );
+  const isCorrect: boolean | null | undefined =
+    answerIdx >= 0
+      ? questions[currentQuestion].answers[answerIdx]?.isCorrect
+      : null;
+
+  console.log(isCorrect);
 
   if (submitted) {
     return (
@@ -76,6 +105,7 @@ export default function QuizzQuestions(props: Props) {
           <Button
             size={"icon"}
             variant={"outline"}
+            onClick={handlePrev}
           >
             <ChevronLeft />
           </Button>
@@ -83,6 +113,7 @@ export default function QuizzQuestions(props: Props) {
           <Button
             size={"icon"}
             variant={"outline"}
+            onClick={handleClose}
           >
             <X />
           </Button>
@@ -107,9 +138,13 @@ export default function QuizzQuestions(props: Props) {
                 return (
                   <Button
                     key={answer.id}
+                    disabled={!!selectedAnswer}
                     variant={variant}
                     size={"xl"}
-                    onClick={() => handleAnswer(answer)}
+                    onClick={() =>
+                      handleAnswer(answer, questions[currentQuestion].id)
+                    }
+                    className="disabled:opacity-100"
                   >
                     <p className="whitespace-normal">{answer.text}</p>
                   </Button>
