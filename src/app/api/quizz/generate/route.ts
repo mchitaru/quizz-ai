@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
+import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 
 export async function POST(req: NextRequest) {
   const body = await req.formData();
@@ -31,9 +32,50 @@ export async function POST(req: NextRequest) {
     }
 
     const model = new ChatOpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      openAIApiKey: process.env.OPENAI_API_KEY,
       modelName: "gpt-4-1106-preview",
     });
+
+    const parser = new JsonOutputFunctionsParser();
+    const extractionFunctionSchema = {
+      name: "extractor",
+      description: "Extracts fields from the output",
+      parameters: {
+        quizz: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            description: { type: "string" },
+            questions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  text: { type: "string" },
+                  answers: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        text: { type: "string" },
+                        isCorrect: { type: "boolean" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const runnable = model
+      .bind({
+        functions: [extractionFunctionSchema],
+        function_call: { name: "extractor" },
+      })
+      .pipe(parser);
 
     const message = new HumanMessage({
       content: [
@@ -44,7 +86,7 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    const result = await model.invoke([message]);
+    const result = await runnable.invoke([message]);
     console.log(result);
 
     return NextResponse.json(
